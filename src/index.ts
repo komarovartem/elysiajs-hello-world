@@ -39,7 +39,6 @@ const sendAllData = (room: string) => {
 }
 
 const server = Bun.serve<User>({
-    hostname: process.env.HOSTNAME,
     async fetch(req, server) {
         const {searchParams, pathname} = new URL(req.url);
         const room = (searchParams.get('room') || '').toLowerCase();

@@ -1,5 +1,3 @@
-// import {chat} from "./services/openai";
-
 type User = {
     name: string,
     room: string,
@@ -39,6 +37,7 @@ const sendAllData = (room: string) => {
 }
 
 const server = Bun.serve<User>({
+    hostname: process.env.HOSTNAME,
     async fetch(req, server) {
         const {searchParams, pathname} = new URL(req.url);
         const room = (searchParams.get('room') || '').toLowerCase();
@@ -51,11 +50,22 @@ const server = Bun.serve<User>({
         if (pathname === '/stats') {
             return new Response(JSON.stringify(data, null, 4), {status: 200, ...CORS_HEADERS});
         }
-        //
-        // if (pathname === '/chat') {
-        //     const data = await chat();
-        //     return new Response(JSON.stringify(data, null, 4), {status: 200, ...CORS_HEADERS});
-        // }
+
+        // Add this block to serve static assets
+        if (pathname.endsWith('.js') || pathname.endsWith('.mp3') || pathname.endsWith('.html') || pathname.endsWith('.css') || pathname.endsWith('.png') || pathname.endsWith('.jpg') || pathname.endsWith('.svg') || pathname.endsWith('.ico') || pathname.endsWith('.woff2') || pathname.endsWith('.json')) {
+            const file = Bun.file(`./dist${pathname}`);
+            const exists = await file.exists();
+
+            if (exists) {
+                return new Response(file);
+            }
+
+            return new Response("Not found", {status: 404});
+        }
+
+        if (pathname === '/game' || pathname === '/player' || pathname === '/room') {
+            return new Response(Bun.file(`./dist/index.html`));
+        }
 
         if (checkConnection && data[room] === undefined) {
             return new Response("signup.roomDoesNotExist", {status: 400, ...CORS_HEADERS});
